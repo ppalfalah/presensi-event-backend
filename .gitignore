@@ -1,24 +1,43 @@
+# Logs and temp files
 *.log
+*.backup
+*.bak
 .DS_Store
+Thumbs.db
+
+# Environment files
 .env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
+.env.*
+!.env.example
+
+# IDEs and Editors
 /.fleet
 /.idea
 /.nova
-/.phpunit.cache
 /.vscode
 /.zed
-/auth.json
+.phpactor.json
+.kiro/
+
+# PHPUnit & Testing
+.phpunit.result.cache
+/.phpunit.cache
+
+# Dependencies & Build
 /node_modules
+/vendor
 /public/build
 /public/hot
 /public/storage
+
+# Storage & Secrets
+/auth.json
 /storage/*.key
+/storage/oauth-*.key
 /storage/pail
-/vendor
 Homestead.json
 Homestead.yaml
-Thumbs.db
+
+# SQLite Database
+*.sqlite
+*.sqlite-journal

@@ -195,6 +195,76 @@ class AdminAuthorizationTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_admin_cannot_login_through_alumni_portal(): void
+    {
+        $admin = $this->regularAdmin();
+
+        $this->postJson('/api/auth/login', [
+            'email' => $admin->email,
+            'password' => 'password123',
+            'role' => 'alumni',
+        ])
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Admin tidak diperbolehkan login melalui portal alumni.');
+    }
+
+    public function test_alumni_cannot_login_through_admin_portal(): void
+    {
+        $alumni = User::query()->create([
+            'first_name' => 'Alumni',
+            'last_name' => 'User',
+            'gender' => 'Laki-laki',
+            'email' => 'alumni-user@example.com',
+            'password' => 'password123',
+            'role' => 'alumni',
+            'status' => 'active',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => $alumni->email,
+            'password' => 'password123',
+            'role' => 'admin',
+        ])
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Alumni tidak diperbolehkan login melalui portal admin.');
+    }
+
+    public function test_admin_can_login_through_admin_portal(): void
+    {
+        $admin = $this->regularAdmin();
+
+        $this->postJson('/api/auth/login', [
+            'email' => $admin->email,
+            'password' => 'password123',
+            'role' => 'admin',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_alumni_can_login_through_alumni_portal(): void
+    {
+        $alumni = User::query()->create([
+            'first_name' => 'Alumni',
+            'last_name' => 'User',
+            'gender' => 'Laki-laki',
+            'email' => 'alumni-user2@example.com',
+            'password' => 'password123',
+            'role' => 'alumni',
+            'status' => 'active',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => $alumni->email,
+            'password' => 'password123',
+            'role' => 'alumni',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
     private function superAdmin(): User
     {
         return User::query()->create([

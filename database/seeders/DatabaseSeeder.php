@@ -15,15 +15,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Essential master data & Initial Super Admin configuration
         $this->call([
-            AdminSeeder::class,
             CategorySeeder::class,
-            AlumniSeeder::class,
-            EventSeeder::class,
-            UserDomicileSeeder::class,
+            AdminSeeder::class,
         ]);
 
+        /*
+         |--------------------------------------------------------------------------
+         | Dummy / Demo Data
+         |--------------------------------------------------------------------------
+         | Jika memerlukan data dummy untuk keperluan development atau demo,
+         | jalankan perintah berikut secara terpisah:
+         |
+         | php artisan db:seed --class=DummyDataSeeder
+         |
+         */
     }
 }

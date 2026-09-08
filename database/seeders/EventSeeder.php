@@ -18,15 +18,8 @@ class EventSeeder extends Seeder
     {
         $admin = User::where('role', 'admin')->first();
         if (! $admin) {
-            $admin = User::create([
-                'first_name' => 'Admin',
-                'last_name' => 'Pesantren',
-                'email' => 'admin@pesantren.com',
-                'password' => bcrypt('admin123'),
-                'role' => 'admin',
-                'status' => 'active',
-                'gender' => 'Laki-laki',
-            ]);
+            $this->call(AdminSeeder::class);
+            $admin = User::where('role', 'admin')->first();
         }
 
         $categories = Category::all()->pluck('id', 'category_name');

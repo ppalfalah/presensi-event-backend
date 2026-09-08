@@ -82,6 +82,7 @@ class UserApprovalTest extends TestCase
 
         $this->patchJson("/api/admin/users/{$pending->id}/status", [
             'status' => 'inactive',
+            'reason' => 'Akun dinonaktifkan sementara',
         ])
             ->assertOk()
             ->assertJsonPath('data.user.status', 'inactive');
@@ -95,6 +96,7 @@ class UserApprovalTest extends TestCase
 
         $this->patchJson("/api/admin/users/{$rejected->id}/status", [
             'status' => 'rejected',
+            'reason' => 'Data tidak valid',
         ])
             ->assertOk()
             ->assertJsonPath('data.user.status', 'rejected');
@@ -113,12 +115,14 @@ class UserApprovalTest extends TestCase
 
         $this->patchJson("/api/admin/users/{$admin->id}/status", [
             'status' => 'inactive',
+            'reason' => 'Self deactivation',
         ])
             ->assertForbidden()
             ->assertJsonPath('message', 'Admin cannot change their own status');
 
         $this->patchJson("/api/admin/users/{$otherAdmin->id}/status", [
             'status' => 'rejected',
+            'reason' => 'Admin rejection',
         ])
             ->assertForbidden()
             ->assertJsonPath('message', 'Admin user status cannot be changed');
@@ -136,6 +140,7 @@ class UserApprovalTest extends TestCase
         $this->patchJson('/api/admin/users/bulk-status', [
             'user_ids' => [$alumni->id, $admin->id, $otherAdmin->id],
             'status' => 'inactive',
+            'reason' => 'Bulk deactivation',
         ])
             ->assertOk()
             ->assertJsonPath('success', true)
@@ -174,6 +179,7 @@ class UserApprovalTest extends TestCase
         $this->patchJson('/api/admin/users/bulk-status', [
             'user_ids' => [$admin->id, $otherAdmin->id],
             'status' => 'rejected',
+            'reason' => 'Ineligible users rejection',
         ])
             ->assertUnprocessable()
             ->assertJsonPath('success', false)

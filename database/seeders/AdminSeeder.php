@@ -10,21 +10,31 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
+        $email = env('INITIAL_ADMIN_EMAIL', 'admin@pesantren.com');
+        $password = env('INITIAL_ADMIN_PASSWORD', 'admin123');
+        $firstName = env('INITIAL_ADMIN_FIRST_NAME', 'Admin');
+        $lastName = env('INITIAL_ADMIN_LAST_NAME', 'Pesantren');
+        $phone = env('INITIAL_ADMIN_PHONE', '081234567890');
+        $gender = env('INITIAL_ADMIN_GENDER', 'Laki-laki');
+
         User::updateOrCreate(
-            ['email' => 'admin@pesantren.com'],
+            ['email' => $email],
             [
-                'first_name' => 'Admin',
-                'last_name' => 'Pesantren',
-                'email' => 'admin@pesantren.com',
-                'password' => Hash::make('admin123'),
-                'phone' => '081234567890',
-                'gender' => 'Laki-laki',
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
+                'password' => Hash::make($password),
+                'phone' => $phone,
+                'gender' => $gender,
                 'role' => 'admin',
                 'admin_level' => 'super_admin',
                 'status' => 'active',
             ]
         );
 
-        $this->command->info('Admin seeded successfully!');
+        $this->command->info("Initial Super Admin ({$email}) seeded successfully!");
+        if ($password === 'admin123') {
+            $this->command->warn('⚠️  SECURITY WARNING: Using default initial admin password. Please change the password immediately via the admin portal or set INITIAL_ADMIN_PASSWORD in your .env file.');
+        }
     }
 }
