@@ -18,6 +18,10 @@ class E2EInfrastructureTest extends TestCase
         $this->artisan('e2e:reset')
             ->expectsOutputToContain('APP_ENV must be e2e')
             ->assertExitCode(1);
+
+        $this->artisan('e2e:fixture', ['state' => 'admin-empty'])
+            ->expectsOutputToContain('APP_ENV must be e2e')
+            ->assertExitCode(1);
     }
 
     public function test_baseline_seeder_creates_deterministic_authorized_accounts(): void
@@ -54,5 +58,34 @@ class E2EInfrastructureTest extends TestCase
             'parent_code' => '33.74.04',
             'postal_code' => '50277',
         ]);
+    }
+
+    public function test_dashboard_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(5);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'admin-populated'])->assertSuccessful();
+        $this->assertSame(3, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 2);
+        $this->assertDatabaseCount('presensis', 3);
+
+        $this->artisan('e2e:fixture', ['state' => 'admin-empty'])->assertSuccessful();
+        $this->assertSame(0, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 0);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-no-attendance'])->assertSuccessful();
+        $this->assertSame(1, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 0);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-with-attendance'])->assertSuccessful();
+        $this->assertSame(1, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 5);
+        $this->assertDatabaseCount('event_registrations', 2);
+        $this->assertDatabaseCount('presensis', 2);
     }
 }
