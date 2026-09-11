@@ -39,5 +39,20 @@ class E2EInfrastructureTest extends TestCase
         $this->assertNull($alumni->admin_level);
         $this->assertSame('active', $alumni->status);
         $this->assertTrue(Hash::check((string) config('e2e.alumni.password'), $alumni->password));
+
+        $this->assertDatabaseHas('regions', [
+            'code' => '32.73.01.1001',
+            'name' => 'Isola',
+            'type' => 'village',
+            'parent_code' => '32.73.01',
+            'postal_code' => '40154',
+        ]);
+        $this->assertDatabaseHas('regions', [
+            'code' => '33.74.04.1001',
+            'name' => 'Bulusan',
+            'type' => 'village',
+            'parent_code' => '33.74.04',
+            'postal_code' => '50277',
+        ]);
     }
 }
