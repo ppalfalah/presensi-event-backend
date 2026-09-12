@@ -88,4 +88,35 @@ class E2EInfrastructureTest extends TestCase
         $this->assertDatabaseCount('event_registrations', 2);
         $this->assertDatabaseCount('presensis', 2);
     }
+
+    public function test_user_management_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(7);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'users-filter'])->assertSuccessful();
+        $this->assertSame(5, User::query()->where('role', 'alumni')->count());
+        $this->assertSame(4, User::query()->whereHas('domicile')->count());
+        $this->assertSame(2, User::query()->where('role', 'alumni')->where('status', 'active')->count());
+        $this->assertSame(1, User::query()->where('role', 'alumni')->where('status', 'pending')->count());
+        $this->assertSame(1, User::query()->where('role', 'alumni')->where('status', 'inactive')->count());
+        $this->assertSame(1, User::query()->where('role', 'alumni')->where('status', 'rejected')->count());
+
+        $this->artisan('e2e:fixture', ['state' => 'users-empty'])->assertSuccessful();
+        $this->assertSame(0, User::query()->where('role', 'alumni')->count());
+
+        $this->artisan('e2e:fixture', ['state' => 'users-editable'])->assertSuccessful();
+        $this->assertDatabaseHas('users', ['email' => 'e2e.editable@example.test']);
+
+        $this->artisan('e2e:fixture', ['state' => 'users-deletable'])->assertSuccessful();
+        $this->assertDatabaseHas('users', ['email' => 'e2e.disposable@example.test']);
+
+        $this->artisan('e2e:fixture', ['state' => 'users-pagination-10'])->assertSuccessful();
+        $this->assertSame(10, User::query()->where('role', 'alumni')->count());
+
+        $this->artisan('e2e:fixture', ['state' => 'users-pagination-11'])->assertSuccessful();
+        $this->assertSame(11, User::query()->where('role', 'alumni')->count());
+    }
 }
