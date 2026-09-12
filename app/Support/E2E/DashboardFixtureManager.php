@@ -95,7 +95,7 @@ class DashboardFixtureManager
                 'event_id' => $events[$index % 2]->id,
                 'user_id' => $user->id,
                 'status' => 'hadir',
-                'scanned_at' => now()->subDays($index),
+                'scanned_at' => now(),
             ]);
         }
 
