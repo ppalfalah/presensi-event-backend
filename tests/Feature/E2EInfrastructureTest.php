@@ -119,4 +119,35 @@ class E2EInfrastructureTest extends TestCase
         $this->artisan('e2e:fixture', ['state' => 'users-pagination-11'])->assertSuccessful();
         $this->assertSame(11, User::query()->where('role', 'alumni')->count());
     }
+
+    public function test_event_management_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(8);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'events-status'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 3);
+        $this->assertSame(1, \App\Models\Event::query()->where('status_event', 'inactive')->count());
+
+        $this->artisan('e2e:fixture', ['state' => 'events-registrations'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'events-pagination'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 4);
+
+        $this->artisan('e2e:fixture', ['state' => 'event-categories'])->assertSuccessful();
+        $this->assertDatabaseCount('categories', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'quota-one-remaining'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 1);
+
+        $this->artisan('e2e:fixture', ['state' => 'quota-full'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'quota-race'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 0);
+        $this->assertDatabaseHas('users', ['email' => 'e2e.quota.b@example.test', 'status' => 'active']);
+    }
 }
