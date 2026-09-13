@@ -4,6 +4,7 @@ namespace App\Support\E2E;
 
 use App\Models\Category;
 use App\Models\Event;
+use App\Models\EventQrCode;
 use App\Models\EventRegistration;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,12 @@ class EventManagementFixtureManager
         'quota-one-remaining',
         'quota-full',
         'quota-race',
+        'qr-generate',
+        'qr-event-no-code',
+        'qr-event-active-code',
+        'qr-multiple-events',
+        'qr-regenerate',
+        'qr-pagination',
     ];
 
     public function prepare(string $state): array
@@ -46,6 +53,24 @@ class EventManagementFixtureManager
                 'quota-one-remaining' => $this->createQuotaState($admin, $alumni, $category, 'E2E Quota One Remaining', 2, 1),
                 'quota-full' => $this->createQuotaState($admin, $alumni, $category, 'E2E Quota Full', 2, 2),
                 'quota-race' => $this->createQuotaRaceState($admin, $category),
+                'qr-generate' => $this->createEvent($admin, $category, 'E2E QR Generate Event', 7),
+                'qr-event-no-code' => $this->createEvent($admin, $category, 'E2E QR No Code Event', 7),
+                'qr-event-active-code' => $this->createQrEvent(
+                    $admin,
+                    $category,
+                    'E2E QR Active Event',
+                    '00000000-0000-4000-8000-000000000106',
+                    7,
+                ),
+                'qr-multiple-events' => $this->createQrSelectionEvents($admin, $category),
+                'qr-regenerate' => $this->createQrEvent(
+                    $admin,
+                    $category,
+                    'E2E QR Regenerate Event',
+                    '00000000-0000-4000-8000-000000000109',
+                    5,
+                ),
+                'qr-pagination' => $this->createQrPaginationEvents($admin, $category),
             };
 
             return $this->summary($state);
@@ -148,6 +173,41 @@ class EventManagementFixtureManager
     {
         $this->createEvent($admin, $category, 'E2E Quota Race', 7, 'active', 1);
         $this->createAlumni('Quota', 'Alumni B', 'e2e.quota.b@example.test', '080000000299');
+    }
+
+    private function createQrEvent(
+        User $admin,
+        Category $category,
+        string $title,
+        string $token,
+        int $durationDays,
+    ): void {
+        $event = $this->createEvent($admin, $category, $title, 7);
+
+        EventQrCode::query()->create([
+            'event_id' => $event->id,
+            'qr_token' => $token,
+            'qr_code_image' => null,
+            'qr_code_url' => null,
+            'valid_from' => now()->subMinute(),
+            'duration_days' => $durationDays,
+            'is_active' => true,
+            'created_by' => $admin->id,
+        ]);
+    }
+
+    private function createQrSelectionEvents(User $admin, Category $category): void
+    {
+        $this->createEvent($admin, $category, 'E2E QR Selection Alpha', 7);
+        $this->createEvent($admin, $category, 'E2E QR Selection Beta', 8);
+    }
+
+    private function createQrPaginationEvents(User $admin, Category $category): void
+    {
+        foreach (range(1, 11) as $number) {
+            $title = 'E2E QR Pagination '.str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+            $this->createEvent($admin, $category, $title, $number + 3);
+        }
     }
 
     private function createCategory(string $name, string $description): Category

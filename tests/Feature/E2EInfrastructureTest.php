@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Event;
+use App\Models\EventQrCode;
 use App\Models\User;
 use App\Support\E2E\E2EEnvironmentGuard;
 use Database\Seeders\E2EDatabaseSeeder;
@@ -150,5 +151,42 @@ class E2EInfrastructureTest extends TestCase
         $this->artisan('e2e:fixture', ['state' => 'quota-race'])->assertSuccessful();
         $this->assertDatabaseCount('event_registrations', 0);
         $this->assertDatabaseHas('users', ['email' => 'e2e.quota.b@example.test', 'status' => 'active']);
+    }
+
+    public function test_qr_code_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(7);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-generate'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('event_qr_codes', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-event-no-code'])->assertSuccessful();
+        $this->assertDatabaseCount('event_qr_codes', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-event-active-code'])->assertSuccessful();
+        $this->assertSame(1, EventQrCode::query()->where('is_active', true)->count());
+        $this->assertDatabaseHas('event_qr_codes', [
+            'qr_token' => '00000000-0000-4000-8000-000000000106',
+            'duration_days' => 7,
+            'is_active' => true,
+        ]);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-multiple-events'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-regenerate'])->assertSuccessful();
+        $this->assertDatabaseHas('event_qr_codes', [
+            'qr_token' => '00000000-0000-4000-8000-000000000109',
+            'duration_days' => 5,
+            'is_active' => true,
+        ]);
+
+        $this->artisan('e2e:fixture', ['state' => 'qr-pagination'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 11);
+        $this->assertDatabaseCount('event_qr_codes', 0);
     }
 }
