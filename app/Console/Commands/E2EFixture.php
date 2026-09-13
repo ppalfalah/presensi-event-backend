@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Support\E2E\DashboardFixtureManager;
 use App\Support\E2E\E2EEnvironmentGuard;
 use App\Support\E2E\EventManagementFixtureManager;
+use App\Support\E2E\ReportFixtureManager;
 use App\Support\E2E\UserManagementFixtureManager;
 use Illuminate\Console\Command;
 
@@ -18,6 +19,7 @@ class E2EFixture extends Command
         E2EEnvironmentGuard $guard,
         DashboardFixtureManager $dashboardFixtures,
         EventManagementFixtureManager $eventFixtures,
+        ReportFixtureManager $reportFixtures,
         UserManagementFixtureManager $userFixtures,
     ): int {
         try {
@@ -26,6 +28,7 @@ class E2EFixture extends Command
             $summary = match (true) {
                 in_array($state, DashboardFixtureManager::STATES, true) => $dashboardFixtures->prepare($state),
                 in_array($state, EventManagementFixtureManager::STATES, true) => $eventFixtures->prepare($state),
+                in_array($state, ReportFixtureManager::STATES, true) => $reportFixtures->prepare($state),
                 in_array($state, UserManagementFixtureManager::STATES, true) => $userFixtures->prepare($state),
                 default => throw new \InvalidArgumentException("Unknown E2E fixture state: {$state}"),
             };

@@ -189,4 +189,54 @@ class E2EInfrastructureTest extends TestCase
         $this->assertDatabaseCount('events', 11);
         $this->assertDatabaseCount('event_qr_codes', 0);
     }
+
+    public function test_report_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(11);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-empty'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 0);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-summary'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 2);
+        $this->assertDatabaseCount('presensis', 3);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-detail'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('presensis', 3);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-detail-empty'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-full-attendance'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('event_registrations', 2);
+        $this->assertDatabaseCount('presensis', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'reports-pagination'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 6);
+
+        $this->artisan('e2e:fixture', ['state' => 'engagement-overview'])->assertSuccessful();
+        $this->assertSame(4, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 5);
+        $this->assertDatabaseCount('presensis', 8);
+
+        $this->artisan('e2e:fixture', ['state' => 'engagement-17'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 17);
+        $this->assertDatabaseCount('presensis', 27);
+
+        $this->artisan('e2e:fixture', ['state' => 'engagement-boundaries'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 35);
+        $this->assertDatabaseCount('presensis', 87);
+
+        $this->artisan('e2e:fixture', ['state' => 'engagement-pagination'])->assertSuccessful();
+        $this->assertSame(11, User::query()->where('role', 'alumni')->count());
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('presensis', 0);
+    }
 }
