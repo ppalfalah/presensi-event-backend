@@ -161,14 +161,15 @@ class ReportFixtureManager
 
     private function createEngagementBoundaries(User $admin, Category $category): void
     {
-        $events = $this->createEligibleEvents($admin, $category, 35, 'E2E Engagement Boundary');
+        $events = $this->createEligibleEvents($admin, $category, 100, 'E2E Engagement Boundary');
         $cases = [
             ['Zero', 'engagement.boundary.zero@example.test', '082300000001', 0],
             ['Beginner Low', 'engagement.boundary.beginner-low@example.test', '082300000002', 1],
-            ['Beginner High', 'engagement.boundary.beginner-high@example.test', '082300000003', 13],
-            ['Middle Low', 'engagement.boundary.middle-low@example.test', '082300000004', 14],
-            ['Middle High', 'engagement.boundary.middle-high@example.test', '082300000005', 24],
-            ['Full', 'engagement.boundary.full@example.test', '082300000006', 35],
+            ['Beginner High', 'engagement.boundary.beginner-high@example.test', '082300000003', 39],
+            ['Middle Low', 'engagement.boundary.middle-low@example.test', '082300000004', 40],
+            ['Middle High', 'engagement.boundary.middle-high@example.test', '082300000005', 69],
+            ['High Low', 'engagement.boundary.high-low@example.test', '082300000006', 70],
+            ['Full', 'engagement.boundary.full@example.test', '082300000007', 100],
         ];
 
         foreach ($cases as [$lastName, $email, $phone, $attendanceCount]) {

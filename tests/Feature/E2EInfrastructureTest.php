@@ -231,8 +231,8 @@ class E2EInfrastructureTest extends TestCase
         $this->assertDatabaseCount('presensis', 27);
 
         $this->artisan('e2e:fixture', ['state' => 'engagement-boundaries'])->assertSuccessful();
-        $this->assertDatabaseCount('events', 35);
-        $this->assertDatabaseCount('presensis', 87);
+        $this->assertDatabaseCount('events', 100);
+        $this->assertDatabaseCount('presensis', 319);
 
         $this->artisan('e2e:fixture', ['state' => 'engagement-pagination'])->assertSuccessful();
         $this->assertSame(11, User::query()->where('role', 'alumni')->count());
