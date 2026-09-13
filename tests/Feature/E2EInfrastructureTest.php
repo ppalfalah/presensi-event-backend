@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Event;
 use App\Models\User;
 use App\Support\E2E\E2EEnvironmentGuard;
 use Database\Seeders\E2EDatabaseSeeder;
@@ -129,7 +130,7 @@ class E2EInfrastructureTest extends TestCase
 
         $this->artisan('e2e:fixture', ['state' => 'events-status'])->assertSuccessful();
         $this->assertDatabaseCount('events', 3);
-        $this->assertSame(1, \App\Models\Event::query()->where('status_event', 'inactive')->count());
+        $this->assertSame(1, Event::query()->where('status_event', 'inactive')->count());
 
         $this->artisan('e2e:fixture', ['state' => 'events-registrations'])->assertSuccessful();
         $this->assertDatabaseCount('event_registrations', 2);
