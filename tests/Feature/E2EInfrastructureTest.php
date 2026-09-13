@@ -239,4 +239,29 @@ class E2EInfrastructureTest extends TestCase
         $this->assertDatabaseCount('events', 1);
         $this->assertDatabaseCount('presensis', 0);
     }
+
+    public function test_phase_nine_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(3);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'broadcast-event'])->assertSuccessful();
+        $this->assertDatabaseHas('events', [
+            'event_title' => 'E2E WhatsApp Gathering',
+            'location' => 'Aula Phase 9',
+            'quota' => 25,
+        ]);
+
+        $this->artisan('e2e:fixture', ['state' => 'settings-admin'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 0);
+        $this->assertSame(0, User::query()->where('role', 'alumni')->count());
+
+        $admin = User::query()->where('email', config('e2e.admin.email'))->firstOrFail();
+        $this->assertSame('super_admin', $admin->admin_level);
+        $this->assertSame('active', $admin->status);
+        $this->assertNull($admin->avatar_url);
+        $this->assertTrue(Hash::check((string) config('e2e.admin.password'), $admin->password));
+    }
 }
