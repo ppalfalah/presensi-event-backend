@@ -302,4 +302,43 @@ class E2EInfrastructureTest extends TestCase
             'status' => 'registered',
         ]);
     }
+
+    public function test_phase_eleven_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(10);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-base'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 0);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-valid'])->assertSuccessful();
+        $this->assertDatabaseCount('event_qr_codes', 1);
+        $this->assertDatabaseCount('event_registrations', 1);
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-event-not-started'])->assertSuccessful();
+        $this->assertTrue(Event::query()->firstOrFail()->event_date->isTomorrow());
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-event-ended'])->assertSuccessful();
+        $this->assertTrue(Event::query()->firstOrFail()->event_date->isYesterday());
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-unregistered'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-already-attended'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 1);
+        $this->assertDatabaseHas('event_registrations', ['status' => 'attended']);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-qr-before-valid'])->assertSuccessful();
+        $this->assertTrue(EventQrCode::query()->firstOrFail()->valid_from->isFuture());
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-qr-valid-window'])->assertSuccessful();
+        $this->assertTrue(EventQrCode::query()->firstOrFail()->is_valid_now);
+
+        $this->artisan('e2e:fixture', ['state' => 'scan-qr-expired'])->assertSuccessful();
+        $this->assertTrue(EventQrCode::query()->firstOrFail()->is_expired);
+    }
 }

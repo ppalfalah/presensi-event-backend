@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Support\E2E\DashboardFixtureManager;
 use App\Support\E2E\E2EEnvironmentGuard;
 use App\Support\E2E\EventManagementFixtureManager;
+use App\Support\E2E\PhaseElevenFixtureManager;
 use App\Support\E2E\PhaseNineFixtureManager;
 use App\Support\E2E\PhaseTenFixtureManager;
 use App\Support\E2E\ReportFixtureManager;
@@ -23,6 +24,7 @@ class E2EFixture extends Command
         EventManagementFixtureManager $eventFixtures,
         PhaseNineFixtureManager $phaseNineFixtures,
         PhaseTenFixtureManager $phaseTenFixtures,
+        PhaseElevenFixtureManager $phaseElevenFixtures,
         ReportFixtureManager $reportFixtures,
         UserManagementFixtureManager $userFixtures,
     ): int {
@@ -34,6 +36,7 @@ class E2EFixture extends Command
                 in_array($state, EventManagementFixtureManager::STATES, true) => $eventFixtures->prepare($state),
                 in_array($state, PhaseNineFixtureManager::STATES, true) => $phaseNineFixtures->prepare($state),
                 in_array($state, PhaseTenFixtureManager::STATES, true) => $phaseTenFixtures->prepare($state),
+                in_array($state, PhaseElevenFixtureManager::STATES, true) => $phaseElevenFixtures->prepare($state),
                 in_array($state, ReportFixtureManager::STATES, true) => $reportFixtures->prepare($state),
                 in_array($state, UserManagementFixtureManager::STATES, true) => $userFixtures->prepare($state),
                 default => throw new \InvalidArgumentException("Unknown E2E fixture state: {$state}"),
