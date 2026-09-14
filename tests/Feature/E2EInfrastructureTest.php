@@ -341,4 +341,53 @@ class E2EInfrastructureTest extends TestCase
         $this->artisan('e2e:fixture', ['state' => 'scan-qr-expired'])->assertSuccessful();
         $this->assertTrue(EventQrCode::query()->firstOrFail()->is_expired);
     }
+
+    public function test_phase_twelve_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(11);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'history-empty'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'history-populated'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'history-detail'])->assertSuccessful();
+        $this->assertDatabaseHas('events', [
+            'event_title' => 'E2E History Detail Event',
+            'location' => 'Aula Riwayat E2E',
+        ]);
+        $this->assertDatabaseCount('presensis', 1);
+
+        $this->artisan('e2e:fixture', ['state' => 'history-after-scan'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 0);
+        $this->assertDatabaseCount('event_qr_codes', 1);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-single-category'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-new-user'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 0);
+        $this->assertDatabaseCount('events', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-active-match'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-no-active-match'])->assertSuccessful();
+        $this->assertDatabaseHas('events', ['event_title' => 'E2E Fallback Reuni']);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-inactive-past'])->assertSuccessful();
+        $this->assertDatabaseHas('events', [
+            'event_title' => 'E2E Inactive Matching Event',
+            'status_event' => 'inactive',
+        ]);
+
+        $this->artisan('e2e:fixture', ['state' => 'recommendation-dominant-category'])->assertSuccessful();
+        $this->assertDatabaseCount('presensis', 5);
+        $this->assertDatabaseHas('events', ['event_title' => 'E2E Dominant Seminar Recommendation']);
+        $this->assertDatabaseHas('events', ['event_title' => 'E2E Secondary Reuni Recommendation']);
+    }
 }
