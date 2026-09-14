@@ -8,6 +8,7 @@ use App\Support\E2E\EventManagementFixtureManager;
 use App\Support\E2E\PhaseElevenFixtureManager;
 use App\Support\E2E\PhaseNineFixtureManager;
 use App\Support\E2E\PhaseTenFixtureManager;
+use App\Support\E2E\PhaseThirteenFixtureManager;
 use App\Support\E2E\PhaseTwelveFixtureManager;
 use App\Support\E2E\ReportFixtureManager;
 use App\Support\E2E\UserManagementFixtureManager;
@@ -26,6 +27,7 @@ class E2EFixture extends Command
         PhaseElevenFixtureManager $phaseElevenFixtures,
         PhaseNineFixtureManager $phaseNineFixtures,
         PhaseTenFixtureManager $phaseTenFixtures,
+        PhaseThirteenFixtureManager $phaseThirteenFixtures,
         PhaseTwelveFixtureManager $phaseTwelveFixtures,
         ReportFixtureManager $reportFixtures,
         UserManagementFixtureManager $userFixtures,
@@ -39,6 +41,7 @@ class E2EFixture extends Command
                 in_array($state, PhaseElevenFixtureManager::STATES, true) => $phaseElevenFixtures->prepare($state),
                 in_array($state, PhaseNineFixtureManager::STATES, true) => $phaseNineFixtures->prepare($state),
                 in_array($state, PhaseTenFixtureManager::STATES, true) => $phaseTenFixtures->prepare($state),
+                in_array($state, PhaseThirteenFixtureManager::STATES, true) => $phaseThirteenFixtures->prepare($state),
                 in_array($state, PhaseTwelveFixtureManager::STATES, true) => $phaseTwelveFixtures->prepare($state),
                 in_array($state, ReportFixtureManager::STATES, true) => $reportFixtures->prepare($state),
                 in_array($state, UserManagementFixtureManager::STATES, true) => $userFixtures->prepare($state),

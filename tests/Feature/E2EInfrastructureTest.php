@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\AlumniNotification;
 use App\Models\Event;
 use App\Models\EventQrCode;
 use App\Models\User;
+use App\Support\E2E\PhaseThirteenFixtureManager;
 use App\Support\E2E\E2EEnvironmentGuard;
 use Database\Seeders\E2EDatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -389,5 +391,42 @@ class E2EInfrastructureTest extends TestCase
         $this->assertDatabaseCount('presensis', 5);
         $this->assertDatabaseHas('events', ['event_title' => 'E2E Dominant Seminar Recommendation']);
         $this->assertDatabaseHas('events', ['event_title' => 'E2E Secondary Reuni Recommendation']);
+    }
+
+    public function test_phase_thirteen_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(7);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'notifications-mixed'])->assertSuccessful();
+        $target = User::query()->where('email', PhaseThirteenFixtureManager::ALUMNI_EMAIL)->firstOrFail();
+        $this->assertSame(2, $target->alumniNotifications()->where('is_read', false)->count());
+        $this->assertSame(2, $target->alumniNotifications()->where('is_read', true)->count());
+        $otherAlumni = User::query()->where('email', 'phase13.other@example.test')->firstOrFail();
+        $this->assertDatabaseHas('alumni_notifications', [
+            'user_id' => $otherAlumni->id,
+            'title' => 'E2E Other User Notification',
+            'is_read' => false,
+        ]);
+
+        $this->artisan('e2e:fixture', ['state' => 'notifications-refresh'])->assertSuccessful();
+        $this->artisan('e2e:fixture', ['state' => 'notifications-refresh-add'])->assertSuccessful();
+        $target = User::query()->where('email', PhaseThirteenFixtureManager::ALUMNI_EMAIL)->firstOrFail();
+        $this->assertSame(2, AlumniNotification::query()->where('user_id', $target->id)->count());
+        $this->assertDatabaseHas('alumni_notifications', ['title' => 'E2E Refresh Notification']);
+
+        $this->artisan('e2e:fixture', ['state' => 'profile-avatar'])->assertSuccessful();
+        $this->artisan('e2e:fixture', ['state' => 'profile-avatar'])->assertSuccessful();
+        $target = User::query()->where('email', PhaseThirteenFixtureManager::ALUMNI_EMAIL)->firstOrFail();
+        $this->assertSame('/storage/avatars/'.PhaseThirteenFixtureManager::AVATAR_FILENAME, $target->avatar_url);
+        $this->assertSame('Jl. E2E Phase 13 No. 13', $target->domicile()->value('address'));
+        $this->assertSame(1, User::query()->where('role', 'alumni')->count());
+
+        $this->artisan('e2e:fixture', ['state' => 'profile-no-avatar'])->assertSuccessful();
+        $target = User::query()->where('email', PhaseThirteenFixtureManager::ALUMNI_EMAIL)->firstOrFail();
+        $this->assertNull($target->avatar_url);
+        $this->assertSame('40111', $target->domicile()->value('postal_code'));
     }
 }
