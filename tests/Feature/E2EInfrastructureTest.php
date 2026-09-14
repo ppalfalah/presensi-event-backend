@@ -264,4 +264,42 @@ class E2EInfrastructureTest extends TestCase
         $this->assertNull($admin->avatar_url);
         $this->assertTrue(Hash::check((string) config('e2e.admin.password'), $admin->password));
     }
+
+    public function test_phase_ten_fixtures_are_deterministic_and_isolated(): void
+    {
+        $guard = $this->mock(E2EEnvironmentGuard::class);
+        $guard->shouldReceive('assertSafe')->times(9);
+
+        $this->seed(E2EDatabaseSeeder::class);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-events-list'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 2);
+        $this->assertDatabaseCount('event_registrations', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-events-empty'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-events-filters'])->assertSuccessful();
+        $this->assertDatabaseCount('events', 2);
+        $this->assertDatabaseCount('categories', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-event-unregistered'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 0);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-event-registered'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 1);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-event-quota-register'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 1);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-event-quota-full'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 2);
+
+        $this->artisan('e2e:fixture', ['state' => 'alumni-event-quota-cancel'])->assertSuccessful();
+        $this->assertDatabaseCount('event_registrations', 2);
+        $this->assertDatabaseHas('event_registrations', [
+            'user_id' => User::query()->where('email', config('e2e.alumni.email'))->value('id'),
+            'status' => 'registered',
+        ]);
+    }
 }
