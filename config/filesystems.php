@@ -1,5 +1,9 @@
 <?php
 
+$isE2E = env('APP_ENV') === 'e2e';
+$publicRoot = $isE2E ? storage_path('app/public/e2e') : storage_path('app/public');
+$publicUrlSuffix = $isE2E ? '/e2e' : '';
+
 return [
 
     /*
@@ -40,8 +44,8 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'root' => $publicRoot,
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'.$publicUrlSuffix,
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
