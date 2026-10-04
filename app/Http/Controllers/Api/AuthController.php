@@ -556,14 +556,27 @@ class AuthController extends Controller
     public function updateProfile(Request $request, DomicileResolver $domicileResolver): JsonResponse
     {
         $user = $request->user();
+                if ($request->filled('email')) {
+            $request->merge([
+                'email' => Str::lower(trim((string) $request->input('email'))),
+            ]);
+        }
 
         $validated = $request->validate([
-            'first_name'      => ['sometimes', 'string', 'max:100'],
-            'last_name'       => ['sometimes', 'string', 'max:100'],
-            'gender'          => ['sometimes', Rule::in(['Laki-laki', 'Perempuan'])],
-            'phone'           => ['sometimes', 'string', 'max:20'],
-            'graduation_year' => ['sometimes', 'digits:4', 'integer', 'min:1950', 'max:' . date('Y')],
-            'birth_date'      => ['sometimes', 'date', 'before:today'],
+            'first_name' => ['sometimes','string','max:100',],
+            'last_name' => ['sometimes','nullable','string','max:100',],
+            'email' => ['sometimes','required','string','email','max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+
+            'gender' => ['sometimes',
+                Rule::in(['Laki-laki', 'Perempuan']),
+            ],
+
+            'phone' => ['sometimes','string','max:20',],
+            'graduation_year' => ['sometimes','digits:4','integer','min:1950','max:' . date('Y'),],
+            'birth_date' => ['sometimes','date','before:today',],
+
             'domicile_province_code' => ['nullable', 'string', 'max:20'],
             'domicile_city_code' => ['nullable', 'string', 'max:20'],
             'domicile_district_code' => ['nullable', 'string', 'max:20'],
